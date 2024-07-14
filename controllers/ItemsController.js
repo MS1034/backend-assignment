@@ -1,13 +1,13 @@
-import Items  from "../models/items.js"
+import Items from "../models/items.js"
 import AppError from "../utils/CustomError.js"
 import { funcErrorWraper } from "../utils/ErrorHandler.js"
 import generator from "../utils/IdGenerator.js"
 
 
-export const getItems = funcErrorWraper((req,res) =>{
+export const getItems = funcErrorWraper((req, res) => {
     let visibility = req.query.visibility;
-    if(visibility)
-        visibility = visibility==='true'
+    if (visibility)
+        visibility = visibility === 'true'
     else
         visibility = true
     const items = Items.getItems(visibility)
@@ -15,57 +15,80 @@ export const getItems = funcErrorWraper((req,res) =>{
 })
 
 
-export const getItemById = funcErrorWraper((req,res) =>{
+export const getItemById = funcErrorWraper((req, res) => {
     const id = +req.params.id
-    const result  = Items.getItemById(id)
+    const result = Items.getItemById(id)
     console.log(result)
-    if(result)
+    if (result)
         res.status(200).json(result)
     else
-        throw new AppError(`Record with id=${id} not found.`,404)
+        throw new AppError(`Record with id=${id} not found.`, 404)
 })
 
-export const createItem = funcErrorWraper((req,res) =>{
-    const {title,time,link} = req.body
+export const createItem = funcErrorWraper((req, res) => {
+    const { title, time, link } = req.body
     const isVisible = req.body.isVisible ?? true
 
-    console.log(`isVisible ${isVisible}`)
+    if (!title || !time || !link)
+        throw new AppError(`Title, Time and Link is required to create a js topic.`, 400)
 
-    if(!title || !time || !link)
-        throw new AppError(`Title, Time and Link is required to create a js topic.`,400)
-  
-    const result  = Items.createItem(title,time,link,isVisible)
+    const result = Items.createItem(title, time, link, isVisible)
     console.log(result)
-    if(result)
+    if (result)
         res.status(201).json(result)
     else
-        throw new AppError(`Failed to create new object`,500)
+        throw new AppError(`Failed to create new object`, 500)
 })
 
 
 export const updateItem = funcErrorWraper(
-    (req,res) => {
-        //TODO : implement updation with selective parameters 
+    (req, res) => {
+        const id = +req.params.id
+        const { title, time, link } = req.body
+
+        if (!title && !time && !link)
+            throw new AppError(`Not enough information passed to update a js topic.`, 400)
+
+        const result = Items.updateItem(id, { title, time, link })
+        if (result)
+            res.status(200).json(result)
+        else
+            throw new AppError(`Bad request topic with ${id} not found.`, 400)
     }
 )
 
 
-export const changeVisibility = funcErrorWraper(
-    (req,res) => {
-        //TODO: implement change visibility with error statuses
+export const updateVisibility = funcErrorWraper(
+    (req, res) => {
+        const id = +req.params.id
+        let visibility = req.query.visibility;
+
+        if (visibility)
+            visibility = visibility === 'true'
+        else
+            throw new AppError(`Bad request pass the status in the parameters.`, 400)
+
+        const isPossible = Items.canChangeVisibility(id, visibility)
+        if (isPossible == null)
+            throw new AppError(`Bad request topic with ${id} not found.`, 400)
+        else if (!isPossible)
+            throw new AppError(`Bad request topic is already ${visibility ? "shown" : "hidden"}.`, 400)
+
+        const result = Items.changeVisibility(id, visibility)
+        res.status(200).json(result)
     }
 )
 
 
 
 export const deleteItem = funcErrorWraper(
-    (req,res) => {
-    const id = +req.params.id
-    const result  = Items.deleteItem(id)
-    if(result)
-        res.status(200).json(result)
-    else
-        throw new AppError(`Record with id=${id} not found.`,404)
+    (req, res) => {
+        const id = +req.params.id
+        const result = Items.deleteItem(id)
+        if (result)
+            res.status(200).json(result)
+        else
+            throw new AppError(`Record with id=${id} not found.`, 404)
     }
 )
 
