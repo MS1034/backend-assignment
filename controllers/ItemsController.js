@@ -12,8 +12,9 @@ export const getItems = asyncFuncErrorWraper(async (req, res) => {
 
     const client = await getClient();
     try {
-        const queryText = 'SELECT * FROM topics';
-        const result = await client.query(queryText);
+        const queryText = 'SELECT * FROM topics where is_visible=$1';
+        const params = [visibility]
+        const result = await client.query(queryText, params);
         const items = result.rows;
         res.status(200).json(items);
     } finally {
