@@ -2,7 +2,7 @@ import AppError from "../utils/CustomError.js"
 import { asyncFuncErrorWraper } from "../utils/ErrorHandler.js"
 import getClient from "../database/connection.js"
 import { GenerateToken } from "../middlewares/auth.js";
-const { comparePasswords, hashPassword } = require("../utils/PasswordHelper.js");
+import { comparePasswords, hashPassword } from "../utils/PasswordHelper.js"
 
 
 export const getUsers = asyncFuncErrorWraper(async (req, res) => {
@@ -46,15 +46,15 @@ export const getUserById = asyncFuncErrorWraper(async (req, res) => {
 
 
 export const createUser = asyncFuncErrorWraper(async (req, res) => {
-    const { email, firstName, lastName, role, password } = req.body;
-
+    const { email, firstName, lastName, role } = req.body;
+    let { password } = req.body;
     if (!email || !firstName || !lastName || !role || !password) {
         throw new AppError(`Email, FirstName, LastName,  role and password are required to create a user.`, 400);
     }
 
     const client = await getClient();
     try {
-        const queryText = 'INSERT INTO users(email, firstName, lastName, role, password) VALUES($1, $2, $3, $4, $5) RETURNING *';
+        const queryText = 'INSERT INTO users(email, first_name, last_name, role, password) VALUES($1, $2, $3, $4, $5) RETURNING *';
         password = await hashPassword(password);
         const queryParams = [email, firstName, lastName, role, password]
 
@@ -122,9 +122,12 @@ export const deleteUser = asyncFuncErrorWraper(
 
 export const login = asyncFuncErrorWraper(
     async (req, res) => {
-        const { emailAddress, password } = req.body;
-        const queryText = 'SELECT * FROM users WHERE email = $1 RETURNING *';
-        const queryParams = [emailAddress];
+        console.log(req.body)
+        const { email, password } = req.body;
+        const queryText = 'SELECT * FROM users WHERE email = $1';
+        const queryParams = [email];
+        const client = await getClient()
+
 
         try {
             const result = await client.query(queryText, queryParams)
@@ -134,7 +137,7 @@ export const login = asyncFuncErrorWraper(
                 if (await comparePasswords(password, user.password)) {
                     const token = GenerateToken(user);
                     req.session.token = token
-                    res.status(200).send(user)
+                    res.status(200).send({ ...user, token: token })
                 }
             }
             else

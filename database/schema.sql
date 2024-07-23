@@ -13,10 +13,10 @@ CREATE TABLE IF NOT EXISTS users
 	first_name VARCHAR(100)  NOT NULL,
 	last_name VARCHAR(100) NOT NULL,
 	role user_role NOT NULL,    
-	password varchar(120)  NOT NULL
-	CONSTRAINT email_validation CHECK (email ~* '/^[^\s@]+@[^\s@]+\.[^\s@]+$/')
+	password varchar(120)  NOT NULL,
     updated_at TIMESTAMP,
 	created_at TIMESTAMP DEFAULT NOW()
+	CONSTRAINT email_validation CHECK (email ~* '/^[^\s@]+@[^\s@]+\.[^\s@]+$/')
 );
 
 CREATE TABLE IF NOT EXISTS topics 

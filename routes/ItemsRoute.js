@@ -3,11 +3,7 @@ import { getItems, getItemById, createItem, updateItem, updateVisibility, delete
 
 const router = express.Router()
 
-router.get("", getItems)
-router.get("/:id", getItemById)
-router.post("", createItem)
-router.put("/:id", updateItem)
-router.patch("/:id", updateVisibility)
-router.delete("/:id", deleteItem)
+router.route("").get(getItems).post(createItem)
+router.route("/:id").get(getItemById).put(updateItem).patch(updateVisibility).delete(deleteItem)
 
 export default router
