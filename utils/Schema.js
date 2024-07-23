@@ -1,18 +1,24 @@
 import getClient from "../database/connection.js";
+import fs from "fs"
+
 
 
 export default async function createTable() {
+
     const client = await getClient();
     try {
-        const checkTableQuery = `
-            SELECT to_regclass('public.topics') AS existing_table
-        `;
-        const result = await client.query(checkTableQuery);
+        // const checkTableQuery = `
+        //     SELECT to_regclass('public.topics') AS existing_table
+        // `;
+        // const result = await client.query(checkTableQuery);
 
-        if (result.rows[0].existing_table !== null) {
-            console.log('Table topics already exists.');
-            return;
-        }
+        // if (result.rows[0].existing_table !== null) {
+        //     console.log('Table topics already exists.');
+        //     return;
+        // }
+        let query = fs.readFileSync('./database/schema.sql').toString();
+        await client.query('BEGIN')
+
 
         const createTableQuery = `
             CREATE TABLE topics (
@@ -27,9 +33,12 @@ export default async function createTable() {
                 CONSTRAINT valid_link_format CHECK (link ~* '^(?:(?:https?|ftp):\/\/)?(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)+[^\s]*$')
             )
         `;
-        await client.query(createTableQuery);
-        console.log('Table topics created successfully!');
+        await client.query(query);
+        await client.query('COMMIT')
+
+        console.log('Database created successfully!');
     } catch (err) {
+        await client.query('ROLLBACK')
         console.error('Error creating table:', err.message);
     } finally {
         console.log("I am closed")
